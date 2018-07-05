@@ -46,7 +46,7 @@ negativebinomial = function(alpha,W,l,D,N,L,muphi){
 	C = qt(1 - alpha,df=df)
 	power = 1 - pt(C-t,df) + pt(-C-t,df)
 
-	return(round(power,3))
+	return(sprintf("%.2f",power))
 }
 
 
