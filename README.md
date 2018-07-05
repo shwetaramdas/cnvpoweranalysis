@@ -1,2 +1,2 @@
 # cnvpoweranalysis
-Power Calculator for CNV delection from sequencing data. 
+Power Calculator for CNV detection from sequencing data. 
