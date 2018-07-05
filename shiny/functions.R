@@ -13,7 +13,7 @@ poisson_pure = function(alpha,W,l,D,N,L){
   
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
 
   return(sprintf("%.2f",power))  
@@ -27,7 +27,7 @@ poisson_impurity1 = function(alpha,W,l,D,N,L,F){
   t = numerator / denominator
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
   
   return(sprintf("%.2f",power))
@@ -43,7 +43,7 @@ negativebinomial = function(alpha,W,l,D,N,L,muphi){
 
 	##power
 	df = round(L/W,0) - 1
-	C = qt(1 - alpha,df=df)
+	C = qt(1 - alpha/2,df=df)
 	power = 1 - pt(C-t,df) + pt(-C-t,df)
 
 	return(sprintf("%.2f",power))
@@ -67,7 +67,7 @@ negativebinomial_purity = function(alpha,W,l,D,N,L,muphi,F){
   
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
   
   return(sprintf("%.2f",power))
@@ -82,7 +82,7 @@ poisson_highimpurity = function(alpha,W,l,D,N,L,F){
   
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
   
   return(sprintf("%.2f",power))
