@@ -1,77 +1,134 @@
- #power calculator
+# power calculator
 
-##Function 1: Poisson with 100% purity
+# D: haploid sequencing depth (for a diploid dataset of 30X total coverage, the haploid coverage is 15)
+# L: the length of the CNA or CNV
+# W: the size of the window
+# N: the ploidy of the CNA or CNV (normal diploid regions have N=2)
+# l: average sequencing read length
+# F: the portion of the sample that contains the CNA or CNV
+# alpha: the significance level
+# theta: the variance inflation factor
+
+# Function 1: Poisson sampling with 100% purity and no variance inflation
+# refer to the section 4.1 of the paper
 poisson_pure = function(alpha,W,l,D,N,L){
+  # calculate t score {
   n = L/W
-  numerator = W*D*abs(N-2)*sqrt(L/W)/(2*l)
-  denominator = sqrt(N*W*D/2/l)
-  
+  # the sample size of the CNV
+  numerator = abs(N-2)*sqrt(D*L/l)
+  denominator = sqrt(N)
   t = numerator / denominator
+  # equation 3b in the section 4.1 of the paper
   print(t)
-  ##power
-  df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
-  power = 1 - pt(C-t,df) + pt(-C-t,df)
+  # }
   
+  # calculate power {
+  df = round(n,0) - 1
+  # define the degrees of freedom, df
+  C = qt(1 - alpha/2,df=df)
+  # define the critical value, C
+  power = 1 - pt(C-t,df) + pt(-C-t,df)
   return(power)  
+  # }
 }
+# This function will return 2 values, the t score and the power.
 
+poisson_pure (0.05,1000,100,0.1,3,10000)
+# example: t = 1.825742, power = 0.3377715
+poisson_pure (0.05,1000,100,0.1,3,50000)
+# example: t = 4.082483, power = 0.9782693
+poisson_pure (0.05,1000,100,0.1,3,100000)
+# example: t = 5.773503, power = 0.9998702
 
-##Function 2: Poisson with < 100% purity: INCOMPLETE
+# Function 2: Poisson sampling with less than 100% purity and no variance inflation
+# refer to the section 5.1 of the paper
 poisson_impurity = function(alpha,W,l,D,N,L,F){
-  n = sqrt(L/W)
-  numerator = F*abs(N-2)*D*sqrt(L*W)
-  
-  #simulating variance 
-  V = var(F*rpois(100000,lambda = (D*N*W)/(2*l)) + (1-F)*rpois(100000,lambda =D*W/l))
-  denominator = 2*l*sqrt(V)
-  
+  # calculate t score {
+  n = L/W
+  # the sample size of the CNV
+  numerator = F*abs(N-2)*sqrt(D*L)
+  denominator = sqrt(F*(N-2)+2)*sqrt(l)
   t = numerator / denominator
+  # equation 7 in the section 5.1 of the paper
+  print(t)
+  # }
   
-  ##power
-  df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  # calculate power {
+  df = round(n,0) - 1
+  # define the degrees of freedom, df
+  C = qt(1 - alpha/2,df=df)
+  # define the critical value, C
   power = 1 - pt(C-t,df) + pt(-C-t,df)
-  
-  return(power)
+  return(power)  
+  # }
 }
+# This function will return 2 values, the t score and the power.
 
-##Function 3: Negative binomial with 100% purity
+poisson_impurity (0.05,1000,100,0.1,3,10000,0.5)
+# example: t = 1, power = 0.124211
+poisson_impurity (0.05,1000,100,0.1,3,50000,0.5)
+# example: t = 2.236068, power = 0.5891682
+poisson_impurity (0.05,1000,100,0.1,3,100000,0.5)
+# example: t = 3.162278, power = 0.8792025
 
-##Function 3: Negative binomial with 100% purity
-negativebinomial = function(alpha,W,l,D,N,L,muphi){
-	#INPUT = diploid read depth
-	D = D/2
+# Function 3: Negative Binomial sampling with 100% purity and variance inflation
+# refer to the section 4.2 of the paper
+negativebinomial = function(alpha,W,l,D,N,L,theta){
+  # calculate t score {
+  n = L/W
+  # the sample size of the CNV
 	numerator = sqrt(D*L)*abs(N-2)
-	denominator = sqrt(N*l*(1 + muphi))
+	denominator = sqrt(N*l*(1 + theta))
 	t = numerator / denominator
+	# equation 4b in the section 4.2 of the paper
+	print(t)
+	# }
 
-	##power
-	df = round(L/W,0) - 1
-	C = qt(1 - alpha,df=df)
+	# calculate power {
+	df = round(n,0) - 1
+	# define the degrees of freedom, df
+	C = qt(1 - alpha/2,df=df)
+	# define the critical value, C
 	power = 1 - pt(C-t,df) + pt(-C-t,df)
-
-	return(power)
+  return(power)
+	# }
 }
+# This function will return 2 values, the t score and the power.
 
-##Function 4: Negative binomial with < 100% purity
-negativebinomial_purity = function(alpha,W,l,D,N,L,muphi,F){
-	#input is diploid read depth
-	D = D/2
-	n = sqrt(L/W)
-	phi = muphi / (N*D/l)
-	
-	num = F*abs(N-2)*(D*W/l)*sqrt(L/W)
-	V = var(F*rnbinom(1000000,size=1/phi, mu=(N*D*W/l)) + (1-F)*rnbinom(1000000,size=1/phi,mu=2*D*W/l))
-	t = num / sqrt(V)
+negativebinomial (0.05,1000,100,0.1,3,10000,0.5)
+# example: t = 1.490712, power = 0.3743979
+negativebinomial (0.05,1000,100,0.1,3,50000,0.5)
+# example: t = 3.333333, power = 0.9480268
+negativebinomial (0.05,1000,100,0.1,3,100000,0.5)
+# example: t = 4.714045, power = 0.998548
 
-	##power
-	df = round(L/W,0) - 1
-	C = qt(1 - alpha,df=df)
-	power = 1 - pt(C-t,df) + pt(-C-t,df)
-
-	return(power)
+# Function 4: Negative binomial sampling with less than 100% purity and variance inflation
+# refer to the section 5.2 of the paper
+negativebinomial_purity = function(alpha,W,l,D,N,L,theta,F){
+  # calculate t score {
+  n = L/W
+  # the sample size of the CNV
+  numerator = F*abs(N-2)*sqrt(D*L)
+  denominator = sqrt(F*(N-2)+2)*sqrt(l*(1+theta))
+  t = numerator / denominator
+  # equation 9 in the section 5.2 of the paper
+  print(t)
+  # }
+  
+  # calculate power {
+  df = round(n,0) - 1
+  # define the degrees of freedom, df
+  C = qt(1 - alpha/2,df=df)
+  # define the critical value, C
+  power = 1 - pt(C-t,df) + pt(-C-t,df)
+  return(power)  
+  # }
 }
+# This function will return 2 values, the t score and the power.
 
-#simulate variance of weighted sum of poissons
-#var(F*rpois(10000,lambda = D*N*W/2/l) + (1-F)*rpois(10000,lambda =D*W/l))
+negativebinomial_purity (0.05,1000,100,1,3,10000,1,0.5)
+# example: t = 2.236068, power = 0.4906241
+negativebinomial_purity (0.05,1000,100,1,3,50000,1,0.5)
+# example: t = 5, power = 0.9978252
+negativebinomial_purity (0.05,1000,100,1,3,100000,1,0.5)
+# example: t = 7.071068, power = 0.9999991
