@@ -75,7 +75,7 @@ server = shinyServer(function(input, output) {
   output$power <- renderText({
     if(input$dis =="pois"){
       if(input$F == 1){
-        paste("Power is", round(poisson_pure(as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D),as.numeric(input$N), as.numeric(input$L)),3))
+        paste("Power is", poisson_pure(as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D),as.numeric(input$N), as.numeric(input$L)))
       }else{
         paste("Power is", poisson_impurity(as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D),as.numeric(input$N), as.numeric(input$L),input$F))
       }  
