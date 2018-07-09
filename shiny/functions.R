@@ -6,17 +6,17 @@
 ##Function 1: Poisson with 100% purity
 poisson_pure = function(alpha,W,l,D,N,L){
   n = L/W
-  numerator = W*D*abs(N-2)/2/l*sqrt(L/W)
-  denominator = sqrt(N*W*D/2/l)
+  numerator = W*D*abs(N-2)/l*sqrt(L/W)
+  denominator = sqrt(N*W*D/l)
   
   t = numerator / denominator
   
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
-#  print(t)
-  return(power)  
+
+  return(sprintf("%.2f",power))  
 }
 
 ##Function 2: Poisson with < 100% purity: INCOMPLETE
@@ -27,10 +27,10 @@ poisson_impurity1 = function(alpha,W,l,D,N,L,F){
   t = numerator / denominator
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
   
-  return(round(power,3))
+  return(sprintf("%.2f",power))
 }
 
 
@@ -43,10 +43,10 @@ negativebinomial = function(alpha,W,l,D,N,L,muphi){
 
 	##power
 	df = round(L/W,0) - 1
-	C = qt(1 - alpha,df=df)
+	C = qt(1 - alpha/2,df=df)
 	power = 1 - pt(C-t,df) + pt(-C-t,df)
 
-	return(round(power,3))
+	return(sprintf("%.2f",power))
 }
 
 
@@ -67,10 +67,10 @@ negativebinomial_purity = function(alpha,W,l,D,N,L,muphi,F){
   
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
   
-  return(round(power,3))
+  return(sprintf("%.2f",power))
 }
 
 
@@ -82,10 +82,10 @@ poisson_highimpurity = function(alpha,W,l,D,N,L,F){
   
   ##power
   df = round(L/W,0) - 1
-  C = qt(1 - alpha,df=df)
+  C = qt(1 - alpha/2,df=df)
   power = 1 - pt(C-t,df) + pt(-C-t,df)
   
-  return(power)
+  return(sprintf("%.2f",power))
 }
 
 
