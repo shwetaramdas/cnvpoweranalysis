@@ -20,7 +20,7 @@ poisson_pure = function(alpha,W,l,D,N,L){
 }
 
 ##Function 2: Poisson with < 100% purity: INCOMPLETE
-poisson_impurity1 = function(alpha,W,l,D,N,L,F){
+poisson_impurity = function(alpha,W,l,D,N,L,F){
   n = sqrt(L/W)
   numerator = F*abs(N-2)*sqrt(D*L/l)
   denominator = sqrt(F*(N-2) + 2)
