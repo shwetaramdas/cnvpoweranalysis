@@ -1,19 +1,20 @@
+# load the required libraries
 library(shiny)
 library(markdown)
 library(ggplot2)
 library(grid)
 
+# source the functions from the coresponding files
 source("functions.R")
 source("functions_plot.R")
 
 # Define UI for CNV calculator ----
-ui <- shinyUI(pageWithSidebar(
+ui <- pageWithSidebar(
   
   # Application title
   headerPanel("CNV Power Calculator"),
   
-  # Sidebar with controls to select a dataset and specify the number
-  # of observations to view
+  # Sidebar for users to select a data distribution and specify the parameters
   sidebarPanel(
     helpText("Enter experimental parameters to calculate power"),
     radioButtons('dis', label = 'Distribution*', c('Poisson' = 'pois','Negative Binomial' = 'nb')),
@@ -21,16 +22,17 @@ ui <- shinyUI(pageWithSidebar(
     numericInput("alpha", "Significance Level alpha (range 0-1)*:", 0.05,min=0,max=1),
     numericInput("L", "Length of CNV (in bases)*:", 10000,min=0),
     numericInput("N", "Ploidy of CNV*:", 3,min=0),
-    numericInput("W", "Window length (in bases)*:", 100,min=0),
+    numericInput("W", "Window length (in bases)*:", 1000,min=0),
     numericInput("l", "Length of read (bases)*:", 100,min=0),
     numericInput("D", "Haploid Read Depth (integer value)*: ", 30,min=0),
-    numericInput("phi","Overdispersion parameter mu*phi (optional):",min=0,max=1,value = '')
+    numericInput("phi","Overdispersion parameter mu*phi or theta (for Negative Binomial Distribution):",min=0,max=1,value = '')
   ),
   
-  # Show a summary of the dataset and an HTML table with the requested
-  # number of observations
+  # Main Panel to display a summary of inputs, the calculated power, and a panel for
+  # users to generate their own power curve
   mainPanel(
     tabsetPanel(type = "tabs",
+                # to print a summary of the input parameters
                 tabPanel("Input Parameters", verbatimTextOutput("toPrint")),
                 tabPanel("Power", verbatimTextOutput("power")),
                 tabPanel("Power Curve",verbatimTextOutput("powerCurve_text"),
@@ -48,13 +50,12 @@ ui <- shinyUI(pageWithSidebar(
                 tabPanel("About",includeMarkdown("README.md"))
                 
     )
-#    print("Power is:"),
- #   textOutput('power'),
-  #  tableOutput("view")
   )
-))
+)
 
-server = shinyServer(function(input, output) {
+
+# Define the Server function for CNV calculator ----
+server = function(input, output) {
 
     output$summary <- renderPrint({
     dataset <- rnorm(input$W)
@@ -64,8 +65,19 @@ server = shinyServer(function(input, output) {
     sprintf("This tool allows researchers to design experiments for CNV detection from sequencing data. ")
   })
     
+  # to print a summary of input parameters
   output$toPrint <- renderText({
-      sprintf(" L: %s \n D: %s \n W: %s \n N: %s \n l: %s \n F: %s \n" ,input$L, input$D, input$W, input$N, input$l, input$F)
+      sprintf("Distribution: %s\nF: %s\nalpha: %s\nL: %s\nN: %s\nW: %s\nl: %s\nD: %s\ntheta: %s\n",
+              input$dis,
+              input$F,
+              input$alpha,
+              input$L,
+              input$N,
+              input$W,
+              input$l,
+              input$D,
+              input$phi
+)
   })
   # Show the first "n" observations
   output$view <- renderTable({
@@ -109,6 +121,6 @@ server = shinyServer(function(input, output) {
       write.csv(powervalues(input),file, row.names = FALSE)
     }
   )
-})
+}
 
 shinyApp(ui, server)
