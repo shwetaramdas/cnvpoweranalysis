@@ -1,8 +1,34 @@
-##functions.R
+# functions.R
 
-#power calculator
+# D: haploid sequencing depth (for a diploid dataset of 30X total coverage, the haploid coverage is 15)
+# L: the length of the CNA or CNV
+# W: the size of the window
+# N: the ploidy of the CNA or CNV (normal diploid regions have N=2)
+# l: average sequencing read length
+# F: the portion of the sample that contains the CNA or CNV
+# alpha: the significance level
+# theta: the variance inflation factor
 
-##Function 1: Poisson with 100% purity
+# Function 0: Universal Applicable CPV Power Analysis
+# A modefied version of function 4, which can be applied to all situation.
+# This function will return 1 values, the power.
+# This function has default value for alpha as 0.05, theta as 0, F as 1.
+UA_CPA = function (alpha=0.05,W,l,D,N,L,theta=0,F=1){
+  # calculate t score {
+  n = L/W  # the sample size of the CNV
+  numerator = F*abs(N-2)*sqrt(D*L)
+  denominator = sqrt(F*(N-2)+2)*sqrt(l*(1+theta))
+  t = numerator / denominator
+  # }
+  
+  # calculate power {
+  df = round(n,0) - 1  # define the degrees of freedom, df
+  C = qt(1 - alpha/2,df=df)  # define the critical value, C
+  power = 1 - pt(C-t,df) + pt(-C-t,df)
+  return(power)
+  # }
+}
+
 ##Function 1: Poisson with 100% purity
 poisson_pure = function(alpha,W,l,D,N,L){
   n = L/W
