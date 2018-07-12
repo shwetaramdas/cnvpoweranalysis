@@ -1,4 +1,6 @@
-#plot functions
+# plot_functions.R
+
+# Source the functions from the coresponding file
 source("functions.R")
 
 #single parameter: read depth
