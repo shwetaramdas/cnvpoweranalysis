@@ -1,42 +1,42 @@
+# Load the required libraries
 library(shiny)
 library(markdown)
 library(ggplot2)
 library(grid)
 
+# Source the functions from the coresponding files
 source("functions.R")
-source("functions_plot.R")
 
 # Define UI for CNV calculator ----
-ui <- shinyUI(pageWithSidebar(
+ui <- pageWithSidebar(
   
   # Application title
   headerPanel("CNV Power Calculator"),
   
-  # Sidebar with controls to select a dataset and specify the number
-  # of observations to view
+  # Sidebar for users to select a data distribution and specify the parameters
   sidebarPanel(
     helpText("Enter experimental parameters to calculate power"),
     radioButtons('dis', label = 'Distribution*', c('Poisson' = 'pois','Negative Binomial' = 'nb')),
     numericInput("F", "Tumor Purity (range 0-1)*:", 1,min=0,max=1),
-    numericInput("alpha", "Significance Level alpha (range 0-1)*:", 0.05,min=0,max=1),
+    numericInput("alpha", "Significance Level, alpha (range 0-1)*:", 0.05,min=0,max=1),
     numericInput("L", "Length of CNV (in bases)*:", 10000,min=0),
     numericInput("N", "Ploidy of CNV*:", 3,min=0),
-    numericInput("W", "Window length (in bases)*:", 100,min=0),
-    numericInput("l", "Length of read (bases)*:", 100,min=0),
-    numericInput("D", "Haploid Read Depth (integer value)*: ", 30,min=0),
-    numericInput("phi","Overdispersion parameter mu*phi (optional):",min=0,max=1,value = '')
+    numericInput("W", "Window length (in bases)*:", 1000,min=0),
+    numericInput("l", "Length of read (in bases)*:", 100,min=0),
+    numericInput("D", "Haploid Read Depth*: ", 30,min=0),
+    numericInput("phi","Overdispersion parameter mu*phi or theta (0 for Poisson Distribution):", min=0, value = 0)
   ),
   
-  # Show a summary of the dataset and an HTML table with the requested
-  # number of observations
+  # Main Panel to display a summary of inputs, the calculated power, and a panel for users to generate their own power curve
   mainPanel(
     tabsetPanel(type = "tabs",
-                tabPanel("Input Parameters", verbatimTextOutput("toPrint")),
-                tabPanel("Power", verbatimTextOutput("power")),
+                # To print a summary of the input parameters and the calculated power
+                tabPanel("Summary", verbatimTextOutput("toPrint")),
+                # To generate a power curve
                 tabPanel("Power Curve",verbatimTextOutput("powerCurve_text"),
                          selectInput('tovary',label="First parameter to vary along x-axis", choices=c('None','Read Depth','Read length','Window size','Length of CNV','Sample purity')),
                          numericInput("min1","Minimum value of parameter to be tested",1),
-                         numericInput("max1","Maximum value of parameter to be tested",10),
+                         numericInput("max1","Maximum value of parameter to be tested",10000),
 
                          selectInput('tovary2',label="Second Parameter to Vary (line color)", choices=c('None','Read Depth','Read length','Window size','Length of CNV','Sample purity')),
                          numericInput("val1","Value 1 to be tested for parameter 2",1),
@@ -45,70 +45,46 @@ ui <- shinyUI(pageWithSidebar(
                          plotOutput("powerCurve",width="75%"),
                          downloadButton("downloadData", "Download Raw Values")
                 ),
+                # To display more information about the website
                 tabPanel("About",includeMarkdown("README.md"))
                 
     )
-#    print("Power is:"),
- #   textOutput('power'),
-  #  tableOutput("view")
   )
-))
+)
 
-server = shinyServer(function(input, output) {
 
-    output$summary <- renderPrint({
-    dataset <- rnorm(input$W)
-    summary(dataset)
-  })
-  output$description <- renderText({
-    sprintf("This tool allows researchers to design experiments for CNV detection from sequencing data. ")
-  })
-    
+# Define the Server function for CNV calculator
+server = function(input, output) {
+
+  # To print a summary of input parameters and the calcualted power
   output$toPrint <- renderText({
-      sprintf(" L: %s \n D: %s \n W: %s \n N: %s \n l: %s \n F: %s \n" ,input$L, input$D, input$W, input$N, input$l, input$F)
+    # To calcualte the power coresponding to the inputs
+    calculated_power <- UA_CPA (as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D), as.numeric(input$N), as.numeric(input$L), as.numeric(input$phi), as.numeric(input$F))
+    # To print out a list of the input parameters and the calculated power
+    paste(sprintf("Distribution: %s\nTumor Purity, F: %s\nSignificance Level, alpha: %s\nLength of CNV, L: %s\nPloidy of CNV, N: %s\nWindow length, W: %s\nLength of read, l: %s\nHaploid Read Depth, D: %s\nOverdispersion parameter, theta: %s\n\n",
+              input$dis, input$F, input$alpha, input$L, input$N, input$W, input$l, input$D, input$phi), paste("\nThe power for this experiment design is", format(round(calculated_power, 2), nsmall = 2)))
   })
-  # Show the first "n" observations
-  output$view <- renderTable({
 
-  })
- 
-  output$power <- renderText({
-    if(input$dis =="pois"){
-      if(input$F == 1){
-        paste("Power is", poisson_pure(as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D),as.numeric(input$N), as.numeric(input$L)))
-      }else{
-        paste("Power is", poisson_impurity(as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D),as.numeric(input$N), as.numeric(input$L),input$F))
-      }  
-    }
-    else if(input$dis == "nb"){
-      if(is.na(input$phi)) {
-        phi = 1/(input$W*input$D/input$l)
-      }else{
-        phi = input$phi
-      }
-      negativebinomial_purity(input$alpha,input$W,input$l,input$D,input$N,input$L,phi,input$F)
-    }
-  })
-  ##########################
-  ##Generate a power curve##
-  output$powerCurve <- renderPlot({plot_power(input)});
+  # Generate a power curve
+  output$powerCurve <- renderPlot({UA_CPAP(input)});
   output$powerCurve_text <- renderText({
     if(input$tovary == 'None'){
       sprintf("Select parameter to vary to plot a power curve")
     }
     else{
-      sprintf(" L: %s \n D: %s \n W: %s \n N: %s \n l: %s \n" ,input$L, input$D, input$W, input$N, input$l)
+      sprintf("Distribution: %s\nTumor Purity, F: %s\nSignificance Level, alpha: %s\nLength of CNV, L: %s\nPloidy of CNV, N: %s\nWindow length, W: %s\nLength of read, l: %s\nHaploid Read Depth, D: %s\nOverdispersion parameter, theta: %s\n\n",
+              input$dis, input$F, input$alpha, input$L, input$N, input$W, input$l, input$D, input$phi)
     }
   })
   
+  # Allow the user to download the data
   output$downloadData <- downloadHandler(
-    filename = function() {
-      paste(input$dataset, ".csv", sep = "")
-    },
+    filename = "raw_data.csv",
     content = function(file) {
-      write.csv(powervalues(input),file, row.names = FALSE)
+      write.csv(
+        x = df_1, file) # df_1 is a global variable of data frame that is generated in the function UA_CPAP
     }
   )
-})
+}
 
 shinyApp(ui, server)

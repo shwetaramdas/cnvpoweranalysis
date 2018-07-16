@@ -1,112 +1,93 @@
-##functions.R
+# functions.R
 
-#power calculator
+# D: haploid sequencing depth (for a diploid dataset of 30X total coverage, the haploid coverage is 15)
+# L: the length of the CNA or CNV
+# W: the size of the window
+# N: the ploidy of the CNA or CNV (normal diploid regions have N=2)
+# l: average sequencing read length
+# F: the portion of the sample that contains the CNA or CNV
+# alpha: the significance level
+# theta: the variance inflation factor
 
-##Function 1: Poisson with 100% purity
-##Function 1: Poisson with 100% purity
-poisson_pure = function(alpha,W,l,D,N,L){
-  n = L/W
-  numerator = W*D*abs(N-2)/l*sqrt(L/W)
-  denominator = sqrt(N*W*D/l)
-  
+# Function 0: Universal Applicable CPV Power Analysis
+# This function will return one value, the power.
+# This function has default value for alpha as 0.05, theta as 0, F as 1.
+UA_CPA = function (alpha=0.05,W,l,D,N,L,theta=0,F=1){
+  # calculate t score {
+  n = L/W  # the sample size of the CNV
+  numerator = F*abs(N-2)*sqrt(D*L)
+  denominator = sqrt(F*(N-2)+2)*sqrt(l*(1+theta))
   t = numerator / denominator
+  # }
   
-  ##power
-  df = round(L/W,0) - 1
-  C = qt(1 - alpha/2,df=df)
+  # calculate power {
+  df = round(n,0) - 1  # define the degrees of freedom, df
+  C = qt(1 - alpha/2,df=df)  # define the critical value, C
   power = 1 - pt(C-t,df) + pt(-C-t,df)
-
-  return(sprintf("%.2f",power))  
+  return(power)
+  # }
 }
 
-##Function 2: Poisson with < 100% purity: INCOMPLETE
-poisson_impurity = function(alpha,W,l,D,N,L,F){
-  n = sqrt(L/W)
-  numerator = F*abs(N-2)*sqrt(D*L/l)
-  denominator = sqrt(F*(N-2) + 2)
-  t = numerator / denominator
-  ##power
-  df = round(L/W,0) - 1
-  C = qt(1 - alpha/2,df=df)
-  power = 1 - pt(C-t,df) + pt(-C-t,df)
-  
-  return(sprintf("%.2f",power))
-}
-
-
-##Function 3: Negative binomial with 100% purity
-negativebinomial = function(alpha,W,l,D,N,L,muphi){
-	#INPUT = diploid read depth
-	numerator = sqrt(D*L)*abs(N-2)
-	denominator = sqrt(N*l*(1 + muphi))
-	t = numerator / denominator
-
-	##power
-	df = round(L/W,0) - 1
-	C = qt(1 - alpha/2,df=df)
-	power = 1 - pt(C-t,df) + pt(-C-t,df)
-
-	return(sprintf("%.2f",power))
-}
-
-
-##Function 4: Negative binomial with < 100% purity
-
-##Function 4: Negative binomial with < 100% purity
-negativebinomial_purity = function(alpha,W,l,D,N,L,muphi,F){
-  #input is diploid read depth
-  n = sqrt(L/W)
-  phi = muphi / (N*D/l)
-  
-  #	num = F*abs(N-2)*(D*W/l)*sqrt(L/W)
-  #	V = var(F*rnbinom(1000000,size=1/phi, mu=(N*D*W/l)) + (1-F)*rnbinom(1000000,size=1/phi,mu=2*D*W/l))
-  
-  num = F*abs(N-2)*sqrt(D*L/l)
-  den = sqrt(F*(N-2)+2) * sqrt(1+muphi)
-  t = num / den
-  
-  ##power
-  df = round(L/W,0) - 1
-  C = qt(1 - alpha/2,df=df)
-  power = 1 - pt(C-t,df) + pt(-C-t,df)
-  
-  return(sprintf("%.2f",power))
-}
-
-
-
-##Function 2: Poisson with < 100% purity: INCOMPLETE
-poisson_highimpurity = function(alpha,W,l,D,N,L,F){
-  n = sqrt(L/W)
-  t = F * abs(N-2) * sqrt(D*L/(2*l))
-  
-  ##power
-  df = round(L/W,0) - 1
-  C = qt(1 - alpha/2,df=df)
-  power = 1 - pt(C-t,df) + pt(-C-t,df)
-  
-  return(sprintf("%.2f",power))
-}
-
-
-plot_power <- function(input){
-  ps = c()
-  if(input$tovary == 'None'){
-    print('Select a parameter to vary to generate a power curve.')
-  }
-  else if((input$tovary=='Read Depth') && (input$tovary2=='None')){
-    plot_readdepth(input);
-  }else if((input$tovary == 'Read Depth')&&(input$tovary2 != 'None')){
-    plot_double(input);
-  }else if((input$tovary=='Read length') && (input$tovary2 == 'None')){
-    plot_readlength(input);
-  }else if((input$tovary=='Window size') && (input$tovary2 == 'None')){
-    plot_windowsize(input);
-  }else if((input$tovary=='Length of CNV') && (input$tovary2 == 'None')){
-    plot_cnvlength(input);
-  }else if((input$tovary=='Read length') && (input$tovary2 != 'None')){
-    plot_double(input);
-  }else if((input$tovary != "None") && (input$tovary2 != 'None')){
-    plot_double(input);
+# Function 1: Universal Aplicable CPV Power Analysis Plotter
+# This function will return the power curve plot.
+UA_CPAP = function(input){
+  # Rename the input variables
+  i_a=as.numeric(input$alpha)
+  i_W=as.numeric(input$W)
+  i_l=as.numeric(input$l)
+  i_D=as.numeric(input$D)
+  i_N=as.numeric(input$N)
+  i_L=as.numeric(input$L)
+  i_t=as.numeric(input$phi)
+  i_F=as.numeric(input$F)
+  # Create a list of x-varialbes which are used to generate the power curve
+  x_values = seq(input$min1, input$max1, length.out = 1000)
+  # Do nothing if None is selected for both
+  if ((input$tovary=="None") && (input$tovary2=='None')){
+  } else if (input$tovary2=='None') { # Plot a one-curve graph if only one variable is selete
+    if (input$tovary=='Read Depth'){
+      y_values = UA_CPA (i_a, i_W, i_l, x_values, i_N, i_L, i_t, i_F)
+    } else if (input$tovary=='Read length'){
+      y_values = UA_CPA (i_a, i_W, x_values, i_D, i_N, i_L, i_t, i_F)
+    } else if (input$tovary=='Window size'){
+      y_values = UA_CPA (i_a, x_values, i_l, i_D, i_N, i_L, i_t, i_F)
+    } else if (input$tovary=='Length of CNV'){
+      y_values = UA_CPA (i_a, i_W, i_l, i_D, i_N, x_values, i_t, i_F)
+    } else if (input$tovary=='Sample purity'){
+      y_values = UA_CPA (i_a, i_W, i_l, i_D, i_N, i_L, i_t, x_values)
+    }
+    df_1 <<- data.frame(a=x_values,b=y_values) # a global variable df_1 is generated so that user can download the raw data
+    ggplot(df_1, aes(x=a,y=b)) + geom_line(colour="green") + xlab(input$tovary) + ylab("Power") # generate the actually power plot
+  } else {
+    MV_list = c(input$val1, input$val2, input$val3) # a list that contians the 3 values for the second parameter to vary
+    y_list = list()
+    for (i in 1:3) { # assign the new parameter
+      if (input$tovary2=='Read Depth'){
+        i_D=MV_list[i]
+      } else if (input$tovary2=='Read length'){
+        i_l=MV_list[i]
+      } else if (input$tovary2=='Window size'){
+        i_W=MV_list[i]
+      } else if (input$tovary2=='Length of CNV'){
+        i_L=MV_list[i]
+      } else if (input$tovary2=='Sample purity'){
+        i_F=MV_list[i]
+      }  
+      if (input$tovary=='Read Depth'){ # calculate the power base on the new parameter
+        y_list[[i]] = UA_CPA (i_a, i_W, i_l, x_values, i_N, i_L, i_t, i_F)
+      } else if (input$tovary=='Read length'){
+        y_list[[i]] = UA_CPA (i_a, i_W, x_values, i_D, i_N, i_L, i_t, i_F)
+      } else if (input$tovary=='Window size'){
+        y_list[[i]] = UA_CPA (i_a, x_values, i_l, i_D, i_N, i_L, i_t, i_F)
+      } else if (input$tovary=='Length of CNV'){
+        y_list[[i]] = UA_CPA (i_a, i_W, i_l, i_D, i_N, x_values, i_t, i_F)
+      } else if (input$tovary=='Sample purity'){
+        y_list[[i]] = UA_CPA (i_a, i_W, i_l, i_D, i_N, i_L, i_t, x_values)
+      }  
+    }
+    df_1 <<- data.frame(a=x_values,b=y_list[[1]], c=y_list[[2]], d=y_list[[3]]) # a global variable df_1 is generated so that user can download the raw data
+    data_cap = paste(" Green: ",input$tovary2,"=",input$val1,"\n","Blue: ",input$tovary2,"=",input$val2,"\n","Violet:",input$tovary2,"=",input$val3) # caption for the line color
+    ggplot(df_1, aes(x=a)) + geom_line(aes(y=b), colour="green") + geom_line(aes(y=c), colour="blue") + geom_line(aes(y=d), colour="darkviolet") + xlab(input$tovary) + ylab("Power") + labs(subtitle=data_cap) # generate the actually power plot
   }
 }
+
