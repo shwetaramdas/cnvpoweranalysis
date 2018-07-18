@@ -19,4 +19,4 @@ Please contact hanyou@umich.eud and sramdas@umich.edu for questions.
 
 ### Source code
 GitHub: https://github.com/shwetaramdas/cnvpoweranalysis  
-Shiny: https://shiny.med.umich.edu/apps/sramdas/
+Shiny: https://shiny.med.umich.edu/apps/hanyou/CNV_Detection_Power_Calculator/
