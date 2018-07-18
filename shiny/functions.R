@@ -9,7 +9,7 @@
 # alpha: the significance level
 # theta: the variance inflation factor
 
-# Function 0: Universal Applicable CPV Power Analysis
+# Function 1: Universal Applicable CPV Power Analysis
 # This function will return one value, the power.
 # This function has default value for alpha as 0.05, theta as 0, F as 1.
 UA_CPA = function (alpha=0.05,W,l,D,N,L,theta=0,F=1){
@@ -28,7 +28,7 @@ UA_CPA = function (alpha=0.05,W,l,D,N,L,theta=0,F=1){
   # }
 }
 
-# Function 1: Universal Aplicable CPV Power Analysis Plotter
+# Function 2: Universal Aplicable CPV Power Analysis Plotter
 # This function will return the power curve plot.
 UA_CPAP = function(input){
   # Rename the input variables
@@ -57,7 +57,11 @@ UA_CPAP = function(input){
       y_values = UA_CPA (i_a, i_W, i_l, i_D, i_N, i_L, i_t, x_values)
     }
     df_1 <<- data.frame(a=x_values,b=y_values) # a global variable df_1 is generated so that user can download the raw data
-    ggplot(df_1, aes(x=a,y=b)) + geom_line(colour="green") + xlab(input$tovary) + ylab("Power") # generate the actually power plot
+    if (input$log_scale) {
+      ggplot(df_1, aes(x=a,y=b)) + geom_line(colour="forestgreen") + xlab(input$tovary) + ylab("Power") + scale_x_log10()  # generate the actually power plot with log scale for x-axis
+    } else {
+      ggplot(df_1, aes(x=a,y=b)) + geom_line(colour="forestgreen") + xlab(input$tovary) + ylab("Power")  # generate the actually power plot
+    }
   } else {
     MV_list = c(input$val1, input$val2, input$val3) # a list that contians the 3 values for the second parameter to vary
     y_list = list()
@@ -87,7 +91,11 @@ UA_CPAP = function(input){
     }
     df_1 <<- data.frame(a=x_values,b=y_list[[1]], c=y_list[[2]], d=y_list[[3]]) # a global variable df_1 is generated so that user can download the raw data
     data_cap = paste(" Green: ",input$tovary2,"=",input$val1,"\n","Blue: ",input$tovary2,"=",input$val2,"\n","Violet:",input$tovary2,"=",input$val3) # caption for the line color
-    ggplot(df_1, aes(x=a)) + geom_line(aes(y=b), colour="green") + geom_line(aes(y=c), colour="blue") + geom_line(aes(y=d), colour="darkviolet") + xlab(input$tovary) + ylab("Power") + labs(subtitle=data_cap) # generate the actually power plot
+    if (input$log_scale) {
+      ggplot(df_1, aes(x=a)) + geom_line(aes(y=b), colour="forestgreen") + geom_line(aes(y=c), colour="blue") + geom_line(aes(y=d), colour="darkviolet") + xlab(input$tovary) + ylab("Power") + labs(subtitle=data_cap) + scale_x_log10() # generate the actually power plot with log sacle for x-axis
+    } else {
+      ggplot(df_1, aes(x=a)) + geom_line(aes(y=b), colour="forestgreen") + geom_line(aes(y=c), colour="blue") + geom_line(aes(y=d), colour="darkviolet") + xlab(input$tovary) + ylab("Power") + labs(subtitle=data_cap) # generate the actually power plot
+    }
   }
 }
 
