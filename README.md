@@ -14,7 +14,8 @@ D: haploid sequencing depth (for a diploid dataset of 30X total coverage, the ha
 theta: the variance inflation factor  
 
 ### Contact
-Contact sramdas@umich.edu for questions.
+This website is maintained by Jun Li's Lab.  
+Please contact hanyou@umich.eud and sramdas@umich.edu for questions.
 
 ### Source code
 GitHub: https://github.com/shwetaramdas/cnvpoweranalysis  
