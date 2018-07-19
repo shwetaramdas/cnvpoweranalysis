@@ -50,15 +50,23 @@ ui <- fluidPage(
       tabsetPanel(
         # To print a summary of the input parameters, the calculated power, and power curve all in one page
         tabPanel("Summary",
+                 helpText(),
+                 actionButton("preset_00", "Preset 00"),
+                 actionButton("preset_01", "Preset 01"),
+                 actionButton("preset_02", "Preset 02"),
+                 actionButton("preset_03", "Preset 03"),
+                 actionButton("preset_04", "Preset 04"),
+                 helpText(),
                  verbatimTextOutput("toPrint"),
                  plotOutput("powerCurve",width="98%"),
                  downloadButton("downloadData", "Download Raw Data"),  # button for download data
                  downloadButton("downloadGraph", "Download Graph")  # button for download graph
         ),
+        tabPanel("Tutorial", includeMarkdown("tutorial.md")),
         # To display more information about the website
-        tabPanel("About",includeMarkdown("README.md")),
+        tabPanel("About", includeMarkdown("README.md")),
         # To display the patch notes
-        tabPanel("Patch Notes",includeMarkdown("patch_notes.md"))
+        tabPanel("Patch Notes", includeMarkdown("patch_notes.md"))
                 
     )
   )
@@ -67,7 +75,7 @@ ui <- fluidPage(
 
 
 # Define the Server function for CNV calculator
-server = function(input, output) {
+server = function(input, output, session) {
 
   # To print a summary of input parameters and the calcualted power
   output$toPrint <- renderText({
@@ -81,6 +89,106 @@ server = function(input, output) {
   # Generate a power curve
   output$powerCurve <- renderPlot({UA_CPAP(input)});
 
+  # Adopt preset 00
+  observeEvent(input$preset_00, {
+    updateNumericInput(session, "F", value = 1)
+    updateNumericInput(session, "alpha", value = 0.05)
+    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "N", value = 3)
+    updateNumericInput(session, "W", value = 100)
+    updateNumericInput(session, "l", value = 100)
+    updateNumericInput(session, "D", value = 0.5)
+    updateNumericInput(session, "phi", value = 0)
+    updateSelectInput(session, "tovary", choices = "Length of CNV")
+    updateNumericInput(session, "min1", value = 500)
+    updateNumericInput(session, "max1", value = 15000)
+    updateSelectInput(session,"tovary2", choices = "None")
+    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val2", value = 2)
+    updateNumericInput(session, "val3", value = 3)
+    updateCheckboxInput(session, "log_scale", value = FALSE)
+  })
+  
+  # Adopt preset 01
+  observeEvent(input$preset_01, {
+    updateNumericInput(session, "F", value = 1)
+    updateNumericInput(session, "alpha", value = 0.05)
+    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "N", value = 3)
+    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "l", value = 100)
+    updateNumericInput(session, "D", value = 0.1)
+    updateNumericInput(session, "phi", value = 0)
+    updateSelectInput(session, "tovary", choices = "Length of CNV")
+    updateNumericInput(session, "min1", value = 5000)
+    updateNumericInput(session, "max1", value = 100000)
+    updateSelectInput(session,"tovary2", choices = "Read Depth")
+    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val2", value = 0.5)
+    updateNumericInput(session, "val3", value = 0.1)
+    updateCheckboxInput(session, "log_scale", value = TRUE)
+  })
+  
+  # Adopt preset 02
+  observeEvent(input$preset_02, {
+    updateNumericInput(session, "F", value = 1)
+    updateNumericInput(session, "alpha", value = 0.05)
+    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "N", value = 3)
+    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "l", value = 100)
+    updateNumericInput(session, "D", value = 0.1)
+    updateNumericInput(session, "phi", value = 1)
+    updateSelectInput(session, "tovary", choices = "Length of CNV")
+    updateNumericInput(session, "min1", value = 5000)
+    updateNumericInput(session, "max1", value = 500000)
+    updateSelectInput(session,"tovary2", choices = "Read Depth")
+    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val2", value = 0.5)
+    updateNumericInput(session, "val3", value = 0.1)
+    updateCheckboxInput(session, "log_scale", value = TRUE)
+  })
+  
+  # Adopt preset 03
+  observeEvent(input$preset_03, {
+    updateNumericInput(session, "F", value = 0.1)
+    updateNumericInput(session, "alpha", value = 0.05)
+    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "N", value = 3)
+    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "l", value = 100)
+    updateNumericInput(session, "D", value = 0.1)
+    updateNumericInput(session, "phi", value = 0)
+    updateSelectInput(session, "tovary", choices = "Length of CNV")
+    updateNumericInput(session, "min1", value = 5000)
+    updateNumericInput(session, "max1", value = 10000000)
+    updateSelectInput(session,"tovary2", choices = "Sample purity")
+    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val2", value = 0.5)
+    updateNumericInput(session, "val3", value = 0.1)
+    updateCheckboxInput(session, "log_scale", value = TRUE)
+  })
+  
+  # Adopt preset 04
+  observeEvent(input$preset_04, {
+    updateNumericInput(session, "F", value = 0.1)
+    updateNumericInput(session, "alpha", value = 0.05)
+    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "N", value = 3)
+    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "l", value = 100)
+    updateNumericInput(session, "D", value = 0.1)
+    updateNumericInput(session, "phi", value = 1)
+    updateSelectInput(session, "tovary", choices = "Length of CNV")
+    updateNumericInput(session, "min1", value = 5000)
+    updateNumericInput(session, "max1", value = 1000000)
+    updateSelectInput(session,"tovary2", choices = "Sample purity")
+    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val2", value = 0.5)
+    updateNumericInput(session, "val3", value = 0.1)
+    updateCheckboxInput(session, "log_scale", value = TRUE)
+  })
+  
   # Allow the user to download the data
   output$downloadData <- downloadHandler(
     filename = "raw_data.csv",

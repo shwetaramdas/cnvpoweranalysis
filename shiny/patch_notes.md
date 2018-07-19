@@ -1,3 +1,6 @@
+### Patch 2018.07.19
+\- 5 Presets were added; preset 1-4 are coresponding to figure 1-4 in the paper
+  
 ### Patch 2018.07.18
 \- Update the contact information  
 \- Update the name from "CNV Power Calculator" to "CNV Detection Power Calculator"  
