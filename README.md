@@ -15,7 +15,7 @@ theta: the variance inflation factor
 
 ### Contact
 This website is maintained by Jun Li's Lab.  
-Please contact hanyou@umich.eud and sramdas@umich.edu for questions.
+Please contact hanyou@umich.edu and sramdas@umich.edu for questions.
 
 ### Source code
 GitHub: https://github.com/shwetaramdas/cnvpoweranalysis  
