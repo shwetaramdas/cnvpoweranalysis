@@ -58,7 +58,7 @@ UA_CPAP = function(input){
     }
     df_1 <<- data.frame(a=x_values,b=y_values) # a global variable df_1 is generated so that user can download the raw data
     if (input$log_scale) {
-      ggplot(df_1, aes(x=a,y=b)) + geom_line(colour="forestgreen") + xlab(input$tovary) + ylab("Power") + scale_x_log10()  # generate the actually power plot with log scale for x-axis
+      ggplot(df_1, aes(x=a,y=b)) + geom_line(colour="forestgreen") + xlab(input$tovary) + ylab("Power") + scale_x_log10(labels = scales::trans_format("log10", scales::math_format(10^.x))) + annotation_logticks(sides = "b") # generate the actually power plot with log scale for x-axis
     } else {
       ggplot(df_1, aes(x=a,y=b)) + geom_line(colour="forestgreen") + xlab(input$tovary) + ylab("Power")  # generate the actually power plot
     }
@@ -92,7 +92,7 @@ UA_CPAP = function(input){
     df_1 <<- data.frame(a=x_values,b=y_list[[1]], c=y_list[[2]], d=y_list[[3]]) # a global variable df_1 is generated so that user can download the raw data
     data_cap = paste(" Green: ",input$tovary2,"=",input$val1,"\n","Blue: ",input$tovary2,"=",input$val2,"\n","Violet:",input$tovary2,"=",input$val3) # caption for the line color
     if (input$log_scale) {
-      ggplot(df_1, aes(x=a)) + geom_line(aes(y=b), colour="forestgreen") + geom_line(aes(y=c), colour="blue") + geom_line(aes(y=d), colour="darkviolet") + xlab(input$tovary) + ylab("Power") + labs(subtitle=data_cap) + scale_x_log10() # generate the actually power plot with log sacle for x-axis
+      ggplot(df_1, aes(x=a)) + geom_line(aes(y=b), colour="forestgreen") + geom_line(aes(y=c), colour="blue") + geom_line(aes(y=d), colour="darkviolet") + xlab(input$tovary) + ylab("Power") + labs(subtitle=data_cap) + scale_x_log10(labels = scales::trans_format("log10", scales::math_format(10^.x))) + annotation_logticks(sides = "b") # generate the actually power plot with log sacle for x-axis
     } else {
       ggplot(df_1, aes(x=a)) + geom_line(aes(y=b), colour="forestgreen") + geom_line(aes(y=c), colour="blue") + geom_line(aes(y=d), colour="darkviolet") + xlab(input$tovary) + ylab("Power") + labs(subtitle=data_cap) # generate the actually power plot
     }

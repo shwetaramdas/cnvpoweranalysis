@@ -1,5 +1,12 @@
+### Patch 2018.07.20  
+\- Improve the log scale  
+\- 2 new presets are added  
+\- The default values for several presets are slightly modified.  
+\- Fix a bug in the preset selection  
+\- All presets are reviewed, and a major revision is applied to add discription and increase readability  
+
 ### Patch 2018.07.19
-\- 5 Presets were added; preset 1-4 are coresponding to figure 1-4 in the paper
+\- 5 Presets are added  
   
 ### Patch 2018.07.18
 \- Update the contact information  
