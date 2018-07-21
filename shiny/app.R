@@ -52,12 +52,12 @@ ui <- fluidPage(
         tabPanel("Summary",
                  helpText(),
                  actionButton("preset_00", "Default"),
-                 actionButton("preset_01", "Preset 01"),
-                 actionButton("preset_02", "Preset 02"),
-                 actionButton("preset_03", "Preset 03"),
-                 actionButton("preset_04", "Preset 04"),
-                 actionButton("preset_05", "Preset 05"),
-                 actionButton("preset_06", "Preset 06"),
+                 actionButton("preset_01", "Scenario 01"),
+                 actionButton("preset_02", "Scenario 02"),
+                 actionButton("preset_03", "Scenario 03"),
+                 actionButton("preset_04", "Scenario 04"),
+                 actionButton("preset_05", "Scenario 05"),
+                 actionButton("preset_06", "Scenario 06"),
                  helpText(),
                  textOutput("preset_text"),
                  helpText(),
@@ -66,7 +66,6 @@ ui <- fluidPage(
                  downloadButton("downloadData", "Download Raw Data"),  # button for download data
                  downloadButton("downloadGraph", "Download Graph")  # button for download graph
         ),
-        tabPanel("Tutorial", includeMarkdown("tutorial.md")),
         # To display more information about the website
         tabPanel("About", includeMarkdown("README.md")),
         # To display the patch notes
