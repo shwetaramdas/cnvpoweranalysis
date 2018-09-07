@@ -20,7 +20,7 @@ ui <- fluidPage(
         tabPanel("Power Calculator",
                  helpText(" "),
                  helpText("Enter experimental parameters to calculate power"),
-                 radioButtons('dis', label = 'Distribution*', c('Poisson' = 'Poisson','Negative Binomial' = 'Negative Binomial')),
+                 radioButtons('dis', label = 'Distribution*', c('Poisson' = 'Poisson','Negative Binomial with theta' = 'Negative Binomial with theta','Negative Binomial with phi' = 'Negative Binomial with phi')),
                  numericInput("F", "Tumor Purity (range 0-1)*:", 1,min=0,max=1),
                  numericInput("alpha", "Significance Level, alpha (range 0-1)*:", 0.05,min=0,max=1),
                  numericInput("L", "Length of CNV (in bases)*:", 10000,min=0),
@@ -28,7 +28,8 @@ ui <- fluidPage(
                  numericInput("W", "Window length (in bases)*:", 100,min=0),
                  numericInput("l", "Length of read (in bases)*:", 100,min=0),
                  numericInput("D", "Haploid Read Depth*: ", 0.5,min=0),
-                 numericInput("phi","Overdispersion parameter, theta (0 for Poisson Distribution):", min=0, value = 0)
+                 numericInput("theta_1","Overdispersion parameter, theta (0 for Poisson Distribution):", min=0, value = 0),
+                 numericInput("phi_1","Overdispersion parameter, phi (0 for Poisson Distribution):", min=0, value = 0)
                  ),
         tabPanel("Power Curve",
                  helpText(" "),
@@ -83,10 +84,10 @@ server = function(input, output, session) {
   # To print a summary of input parameters and the calcualted power
   output$toPrint <- renderText({
     # To calcualte the power coresponding to the inputs
-    calculated_power <- UA_CPA (as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D), as.numeric(input$N), as.numeric(input$L), as.numeric(input$phi), as.numeric(input$F))
+    calculated_power <- UA_CPA (as.numeric(input$alpha), as.numeric(input$W), as.numeric(input$l), as.numeric(input$D), as.numeric(input$N), as.numeric(input$L), as.numeric(input$theta_1), as.numeric(input$F), input)
     # To print out a list of the input parameters and the calculated power
-    paste(sprintf("Distribution: %s\nTumor Purity, F: %s\nSignificance Level, alpha: %s\nLength of CNV, L: %s\nPloidy of CNV, N: %s\nWindow length, W: %s\nLength of read, l: %s\nHaploid Read Depth, D: %s\nOverdispersion parameter, theta: %s\n\n",
-              input$dis, input$F, input$alpha, input$L, input$N, input$W, input$l, input$D, input$phi), paste("\nThe power for this experiment design is", format(round(calculated_power, 2), nsmall = 2)))
+    paste(sprintf("Distribution: %s\nTumor Purity, F: %s\nSignificance Level, alpha: %s\nLength of CNV, L: %s\nPloidy of CNV, N: %s\nWindow length, W: %s\nLength of read, l: %s\nHaploid Read Depth, D: %s\nOverdispersion parameter, theta: %s\nOverdispersion parameter, phi: %s\n\n",
+              input$dis, input$F, input$alpha, input$L, input$N, input$W, input$l, input$D, input$theta_1, input$phi_1), paste("\nThe power for this experiment design is", format(round(calculated_power, 2), nsmall = 2)))
   })
 
   # Generate a power curve
@@ -97,6 +98,7 @@ server = function(input, output, session) {
     output$preset_text <- renderText({  # text to describe the preset
       paste("")
     })
+    updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
@@ -104,7 +106,7 @@ server = function(input, output, session) {
     updateNumericInput(session, "W", value = 100)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 0.5)
-    updateNumericInput(session, "phi", value = 0)
+    updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 500)
     updateNumericInput(session, "max1", value = 15000)
@@ -120,6 +122,7 @@ server = function(input, output, session) {
     output$preset_text <- renderText({  # text to describe the preset
       paste("When sequencing tumor-derived DNA, sometimes one faces the situation of low budget or low amounts of tissue material, or one wishes to use shallow sequencing to gain a preliminary glimpse of the tumor. These situations share the common constraint of small D. As we show in the following graph, for N=3, l=100, W=1000, and α=0.05, sequencing with 1X read depth can detect 10kb CNV near 100% of the times, while sequencing with 0.5X read depth can also detect 10kb CNV fairly accurately (power = 0.95). Sequencing with 0.1X read depth will miss most of the 10kb CNV (power = 0.34); however, it can still be used to detect CNV longer than 45kb (power = 0.97).")
     })
+    updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
@@ -127,7 +130,7 @@ server = function(input, output, session) {
     updateNumericInput(session, "W", value = 1000)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 0.5)
-    updateNumericInput(session, "phi", value = 0)
+    updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
     updateNumericInput(session, "max1", value = 100000)
@@ -143,6 +146,7 @@ server = function(input, output, session) {
     output$preset_text <- renderText({  # text to describe the preset
       paste("Sometimes the researcher already knows the regions of the genome to focus on and is interested in detecting very rare cell populations with copy number aberrations in these regions, even if it requires ultra-deep targeted sequencing. Such needs arise in (1) monitoring of potential recurrence of a particular cancer clone during remission and hoping to achieve high sensitivity with a large D; (2) monitoring gene-specific aberrations in circulating tumor cells or circulating tumor DNA when a predefined list of oncogenes is particularly relevant for a particular cancer type (such as BRAF in melanoma). These practical demands share the common feature of small F and large D. As we show in the following graph, for N=3, l=100, W=1000, and α=0.05, sequencing with 1000X read depth can detect 10kb CNV in a sample contains as low as 2% interested cells (power = 0.97), 100X read depth can detect 10kb CNV in a sample contains 6% interested cells (power = 0.96), and 30X read depth can only detect 10kb CNV in a sample contains more than 12% interested cells (power = 0.97).")
     })
+    updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 0.02)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
@@ -150,7 +154,7 @@ server = function(input, output, session) {
     updateNumericInput(session, "W", value = 1000)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1000)
-    updateNumericInput(session, "phi", value = 0)
+    updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Sample purity")
     updateNumericInput(session, "min1", value = 0)
     updateNumericInput(session, "max1", value = 0.2)
@@ -166,6 +170,7 @@ server = function(input, output, session) {
     output$preset_text <- renderText({  # text to describe the preset
       paste("This example with N=3, l=100, W=1000, and α=0.05 shows power as a function of CNA length L and read depth D under a Poisson distribution. For a CNA with L=10kb, read depth of 0.1 shows very low power (0.34), while a read depth of 1 would increase power significantly (1.00). With today’s sequencing technology, 1X coverage of a mammalian genome costs $30-40. In comparison, a 3-million SNP genotyping platform will measure about 10 SNP loci in this CNA, but at a higher cost.")
     })
+    updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
@@ -173,7 +178,7 @@ server = function(input, output, session) {
     updateNumericInput(session, "W", value = 1000)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
-    updateNumericInput(session, "phi", value = 0)
+    updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
     updateNumericInput(session, "max1", value = 100000)
@@ -189,6 +194,7 @@ server = function(input, output, session) {
     output$preset_text <- renderText({  # text to describe the preset
       paste("This example is exact like our preset 03 except that this example is under the assumption of Negative Binomial model with an overdispersion parameter of 1. For the same CNA with L=10kb, the power decreases from 1.00 to 0.95 at the read depth of 1. The decrease in power here is due to the increase in overall variance and can be compensated by higher sequencing depth if desired.")
     })
+    updateRadioButtons(session, "dis", selected = "Negative Binomial with theta")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
@@ -196,7 +202,7 @@ server = function(input, output, session) {
     updateNumericInput(session, "W", value = 1000)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
-    updateNumericInput(session, "phi", value = 1)
+    updateNumericInput(session, "theta_1", value = 1)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
     updateNumericInput(session, "max1", value = 100000)
@@ -212,6 +218,7 @@ server = function(input, output, session) {
     output$preset_text <- renderText({  # text to describe the preset
       paste("This example is corresponding to the figure 3 in our paper. It extends our earlier example from preset 3 by showing the effect on power when the sample purity is reduced from 1 to 0.5 and 0.1. For the same CNA with L=10kb at the read depth of 1, the power decreases from 1.00 to 0.80 when the sample purity is 0.5, to 0.08 when the sample purity is 0.1. Again, such decrease in power can be compensated by higher sequencing depth.")
     })
+    updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 0.5)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
@@ -219,7 +226,7 @@ server = function(input, output, session) {
     updateNumericInput(session, "W", value = 1000)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
-    updateNumericInput(session, "phi", value = 0)
+    updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
     updateNumericInput(session, "max1", value = 100000)
@@ -235,6 +242,7 @@ server = function(input, output, session) {
     output$preset_text <- renderText({  # text to describe the preset
       paste("This example is exact like our preset 03 except that this example is under the assumption of Negative Binomial model with an overdispersion parameter of 1. For the same CNA with L=10kb and F=0.1, the power decreases from 0.80 to 0.49 at the read depth of 1. The decrease in power here is due to the increase in overall variance and can be compensated by higher sequencing depth if desired.")
     })
+    updateRadioButtons(session, "dis", selected = "Negative Binomial with theta")
     updateNumericInput(session, "F", value = 0.5)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
@@ -242,7 +250,7 @@ server = function(input, output, session) {
     updateNumericInput(session, "W", value = 1000)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
-    updateNumericInput(session, "phi", value = 1)
+    updateNumericInput(session, "theta_1", value = 1)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
     updateNumericInput(session, "max1", value = 100000)

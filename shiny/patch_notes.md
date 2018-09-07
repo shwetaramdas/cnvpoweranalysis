@@ -1,3 +1,12 @@
+### Patch 2018.09.07
+\- Fix a bug; now the distribution methold will update correctly as the user click the preset  
+\- A new layer of check point is added for the sampling process  
+\- The UA_CPA and UA_CPAP functions are further standarized to pave the road for the possible future change  
+\- The UA_CPA function now is able to communicate with the entire input dataset directly  
+\- A new option to use phi as inflation parameter is added  
+\- All other related settings are adjusted for the new inflation parameter phi
+
+
 ### Patch 2018.07.20  
 \- Improve the log scale  
 \- 2 new presets are added  

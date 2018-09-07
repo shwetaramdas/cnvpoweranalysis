@@ -11,7 +11,8 @@ N: the ploidy of the CNA or CNV (normal diploid regions have N=2)
 W: the size of the window  
 l: average sequencing read length  
 D: haploid sequencing depth (for a diploid dataset of 30X total coverage, the haploid coverage is 15)  
-theta: the variance inflation factor  
+theta: the variance inflation factor, equal to phi*N*D*W/l  
+phi: the variance inflation factor
 
 ### Contact
 This website is maintained by Jun Li's Lab.  

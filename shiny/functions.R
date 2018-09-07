@@ -12,7 +12,20 @@
 # Function 1: Universal Applicable CPV Power Analysis
 # This function will return one value, the power.
 # This function has default value for alpha as 0.05, theta as 0, F as 1.
-UA_CPA = function (alpha=0.05,W,l,D,N,L,theta=0,F=1){
+UA_CPA = function (alpha=0.05,W,l,D,N,L,theta=0,F=1,input){
+  # Rename the input variables
+  i_W=as.numeric(input$W)
+  i_l=as.numeric(input$l)
+  i_D=as.numeric(input$D)
+  i_N=as.numeric(input$N)
+  # Define theta
+  if (input$dis=="Poisson") {
+    theta=0
+  } else if (input$dis=="Negative Binomial with theta") {
+    theta=as.numeric(input$theta_1)
+  } else if (input$dis=="Negative Binomial with phi") {
+    theta=as.numeric(input$phi_1)*i_N*i_D*i_W/i_l
+  }
   # calculate t score {
   n = L/W  # the sample size of the CNV
   numerator = F*abs(N-2)*sqrt(D*L)
@@ -38,7 +51,13 @@ UA_CPAP = function(input){
   i_D=as.numeric(input$D)
   i_N=as.numeric(input$N)
   i_L=as.numeric(input$L)
-  i_t=as.numeric(input$phi)
+  if (input$dis=="Poisson") {
+    i_t=0
+  } else if (input$dis=="Negative Binomial with theta") {
+    i_t=as.numeric(input$theta_1)
+  } else if (input$dis=="Negative Binomial with phi") {
+    i_t=as.numeric(input$phi_1)*i_N*i_D*i_W/i_l
+  }
   i_F=as.numeric(input$F)
   # Create a list of x-varialbes which are used to generate the power curve
   x_values = seq(input$min1, input$max1, length.out = 1000)
@@ -46,15 +65,15 @@ UA_CPAP = function(input){
   if ((input$tovary=="None") && (input$tovary2=='None')){
   } else if (input$tovary2=='None') { # Plot a one-curve graph if only one variable is selete
     if (input$tovary=='Read Depth'){
-      y_values = UA_CPA (i_a, i_W, i_l, x_values, i_N, i_L, i_t, i_F)
+      y_values = UA_CPA (i_a, i_W, i_l, x_values, i_N, i_L, i_t, i_F, input)
     } else if (input$tovary=='Read length'){
-      y_values = UA_CPA (i_a, i_W, x_values, i_D, i_N, i_L, i_t, i_F)
+      y_values = UA_CPA (i_a, i_W, x_values, i_D, i_N, i_L, i_t, i_F, input)
     } else if (input$tovary=='Window size'){
-      y_values = UA_CPA (i_a, x_values, i_l, i_D, i_N, i_L, i_t, i_F)
+      y_values = UA_CPA (i_a, x_values, i_l, i_D, i_N, i_L, i_t, i_F, input)
     } else if (input$tovary=='Length of CNV'){
-      y_values = UA_CPA (i_a, i_W, i_l, i_D, i_N, x_values, i_t, i_F)
+      y_values = UA_CPA (i_a, i_W, i_l, i_D, i_N, x_values, i_t, i_F, input)
     } else if (input$tovary=='Sample purity'){
-      y_values = UA_CPA (i_a, i_W, i_l, i_D, i_N, i_L, i_t, x_values)
+      y_values = UA_CPA (i_a, i_W, i_l, i_D, i_N, i_L, i_t, x_values, input)
     }
     df_1 <<- data.frame(a=x_values,b=y_values) # a global variable df_1 is generated so that user can download the raw data
     if (input$log_scale) {
@@ -78,15 +97,15 @@ UA_CPAP = function(input){
         i_F=MV_list[i]
       }  
       if (input$tovary=='Read Depth'){ # calculate the power base on the new parameter
-        y_list[[i]] = UA_CPA (i_a, i_W, i_l, x_values, i_N, i_L, i_t, i_F)
+        y_list[[i]] = UA_CPA (i_a, i_W, i_l, x_values, i_N, i_L, i_t, i_F, input)
       } else if (input$tovary=='Read length'){
-        y_list[[i]] = UA_CPA (i_a, i_W, x_values, i_D, i_N, i_L, i_t, i_F)
+        y_list[[i]] = UA_CPA (i_a, i_W, x_values, i_D, i_N, i_L, i_t, i_F, input)
       } else if (input$tovary=='Window size'){
-        y_list[[i]] = UA_CPA (i_a, x_values, i_l, i_D, i_N, i_L, i_t, i_F)
+        y_list[[i]] = UA_CPA (i_a, x_values, i_l, i_D, i_N, i_L, i_t, i_F, input)
       } else if (input$tovary=='Length of CNV'){
-        y_list[[i]] = UA_CPA (i_a, i_W, i_l, i_D, i_N, x_values, i_t, i_F)
+        y_list[[i]] = UA_CPA (i_a, i_W, i_l, i_D, i_N, x_values, i_t, i_F, input)
       } else if (input$tovary=='Sample purity'){
-        y_list[[i]] = UA_CPA (i_a, i_W, i_l, i_D, i_N, i_L, i_t, x_values)
+        y_list[[i]] = UA_CPA (i_a, i_W, i_l, i_D, i_N, i_L, i_t, x_values, input)
       }  
     }
     df_1 <<- data.frame(a=x_values,b=y_list[[1]], c=y_list[[2]], d=y_list[[3]]) # a global variable df_1 is generated so that user can download the raw data
