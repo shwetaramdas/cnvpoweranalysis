@@ -23,25 +23,36 @@ ui <- fluidPage(
                  radioButtons('dis', label = 'Distribution*', c('Poisson' = 'Poisson','Negative Binomial with theta' = 'Negative Binomial with theta','Negative Binomial with phi' = 'Negative Binomial with phi')),
                  numericInput("F", "Tumor Purity (range 0-1)*:", 1,min=0,max=1),
                  numericInput("alpha", "Significance Level, alpha (range 0-1)*:", 0.05,min=0,max=1),
-                 numericInput("L", "Length of CNV (in bases)*:", 10000,min=0),
+                 numericInput("L", "Length of CNV (in bases)*:", 5000,min=0),
                  numericInput("N", "Ploidy of CNV*:", 3,min=0),
-                 numericInput("W", "Window length (in bases)*:", 100,min=0),
+                 
                  numericInput("l", "Length of read (in bases)*:", 100,min=0),
-                 numericInput("D", "Haploid Read Depth*: ", 0.5,min=0),
+                 numericInput("D", "Haploid Read Depth*: ", 1,min=0),
                  numericInput("theta_1","Overdispersion parameter, theta (0 for Poisson Distribution):", min=0, value = 0),
                  numericInput("phi_1","Overdispersion parameter, phi (0 for Poisson Distribution):", min=0, value = 0)
                  ),
         tabPanel("Power Curve",
                  helpText(" "),
                  helpText("Select parameter to vary to generate a power curve"),
-                 selectInput('tovary',label="First parameter to vary along x-axis", choices=c('None','Read Depth','Read length','Window size','Length of CNV','Sample purity'),selected = "Length of CNV"),
+                 selectInput('tovary',label="First parameter to vary along x-axis", choices=c('None','Read Depth','Read length','Window size','Length of CNV','Sample purity',"Overdispersion parameter"),selected = "Length of CNV"),
                  numericInput("min1","Minimum value of parameter to be tested",500),
-                 numericInput("max1","Maximum value of parameter to be tested",15000),
-                 selectInput('tovary2',label="Second Parameter to Vary (line color)", choices=c('None','Read Depth','Read length','Window size','Length of CNV','Sample purity')),
+                 numericInput("max1","Maximum value of parameter to be tested",10000),
+                 selectInput('tovary2',label="Second Parameter to Vary (line color)", choices=c('None','Read Depth','Read length','Window size','Length of CNV','Sample purity',"Overdispersion parameter")),
                  numericInput("val1","Value 1 to be tested for parameter 2",1),
                  numericInput("val2","Value 2 to be tested for parameter 2",2),
-                 numericInput("val3","Value 3 to be tested for parameter 2",3),
-                 checkboxInput("log_scale", "log Scale for x-Axis",FALSE)
+                 numericInput("val3","Value 3 to be tested for parameter 2",4),
+                 selectInput('tovary3',label="Third Parameter to Vary (line type)", choices=c('None','Read Depth','Read length','Window size','Length of CNV','Sample purity',"Overdispersion parameter")),
+                 numericInput("val31","Value 1 to be tested for parameter 3",0.25),
+                 numericInput("val32","Value 2 to be tested for parameter 3",0.5),
+                 numericInput("val33","Value 3 to be tested for parameter 3",1)
+                 ),
+        tabPanel("Advanced",
+                 helpText(" "),
+                 helpText("Advanced setings for power curve"),
+                 checkboxInput("log_scale", "Use log-scale for x-axis",FALSE),
+                 checkboxInput("fix_y_range", "Fix range for y-axis to 0-1",TRUE),
+                 checkboxInput("show_x_at_0", "Include x=0 in the graph (for continuous-scale)",FALSE),
+                 numericInput("W", "Window length (in bases)*:", 1,min=0)
                  )
       )
       ),
@@ -53,17 +64,23 @@ ui <- fluidPage(
         tabPanel("Summary",
                  helpText(),
                  actionButton("preset_00", "Default"),
-                 actionButton("preset_01", "Scenario 01"),
-                 actionButton("preset_02", "Scenario 02"),
-                 actionButton("preset_03", "Scenario 03"),
-                 actionButton("preset_04", "Scenario 04"),
-                 actionButton("preset_05", "Scenario 05"),
-                 actionButton("preset_06", "Scenario 06"),
+                 helpText(),
+                 actionButton("preset_01", "Figure 1"),
+                 actionButton("preset_02", "Figure 2"),
+                 actionButton("preset_03", "Figure 3"),
+                 actionButton("preset_04", "Figure 4"),
+                 helpText(),
+                 actionButton("preset_05", "Use Case 1a"),
+                 actionButton("preset_06", "USe Case 1b"),
+                 helpText(),
+                 actionButton("preset_07", "Use Case 2a"),
+                 actionButton("preset_08", "USe Case 2b"),
                  helpText(),
                  textOutput("preset_text"),
                  helpText(),
                  verbatimTextOutput("toPrint"),
-                 plotOutput("powerCurve",width="98%"),
+                 plotOutput("powerCurve",width="98%",hover = hoverOpts(id = "plot_hover", delayType = "throttle")),
+                 verbatimTextOutput("plot_hoverinfo"),
                  downloadButton("downloadData", "Download Raw Data"),  # button for download data
                  downloadButton("downloadGraph", "Download Graph")  # button for download graph
         ),
@@ -90,6 +107,14 @@ server = function(input, output, session) {
               input$dis, input$F, input$alpha, input$L, input$N, input$W, input$l, input$D, input$theta_1, input$phi_1), paste("\nThe power for this experiment design is", format(round(calculated_power, 2), nsmall = 2)))
   })
 
+  output$plot_hoverinfo <- renderPrint({
+    if (is.null(input$plot_hover)) {
+      cat("x=NA"," y=NA",sep = "")
+    } else {
+      cat("x=", round(input$plot_hover$x, 2), " y=", round(input$plot_hover$y, 2),sep = "")
+    }
+  })
+  
   # Generate a power curve
   output$powerCurve <- renderPlot({UA_CPAP(input)});
 
@@ -101,164 +126,256 @@ server = function(input, output, session) {
     updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
-    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "L", value = 5000)
     updateNumericInput(session, "N", value = 3)
-    updateNumericInput(session, "W", value = 100)
+    updateNumericInput(session, "W", value = 1)
     updateNumericInput(session, "l", value = 100)
-    updateNumericInput(session, "D", value = 0.5)
+    updateNumericInput(session, "D", value = 1)
     updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 500)
-    updateNumericInput(session, "max1", value = 15000)
+    updateNumericInput(session, "max1", value = 10000)
     updateSelectInput(session,"tovary2", selected = "None")
     updateNumericInput(session, "val1", value = 1)
     updateNumericInput(session, "val2", value = 2)
-    updateNumericInput(session, "val3", value = 3)
+    updateNumericInput(session, "val3", value = 4)
+    updateSelectInput(session,"tovary3", selected = "None")
+    updateNumericInput(session, "val31", value = 0.25)
+    updateNumericInput(session, "val32", value = 0.5)
+    updateNumericInput(session, "val33", value = 1)
     updateCheckboxInput(session, "log_scale", value = FALSE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
   })
   
   # Adopt preset 01
   observeEvent(input$preset_01, {
     output$preset_text <- renderText({  # text to describe the preset
-      paste("When sequencing tumor-derived DNA, sometimes one faces the situation of low budget or low amounts of tissue material, or one wishes to use shallow sequencing to gain a preliminary glimpse of the tumor. These situations share the common constraint of small D. As we show in the following graph, for N=3, l=100, W=1000, and α=0.05, sequencing with 1X read depth can detect 10kb CNV near 100% of the times, while sequencing with 0.5X read depth can also detect 10kb CNV fairly accurately (power = 0.95). Sequencing with 0.1X read depth will miss most of the 10kb CNV (power = 0.34); however, it can still be used to detect CNV longer than 45kb (power = 0.97).")
     })
     updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
-    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "L", value = 5000)
     updateNumericInput(session, "N", value = 3)
-    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "W", value = 1)
     updateNumericInput(session, "l", value = 100)
-    updateNumericInput(session, "D", value = 0.5)
+    updateNumericInput(session, "D", value = 1)
     updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
     updateNumericInput(session, "max1", value = 100000)
     updateSelectInput(session,"tovary2", selected = "Read Depth")
-    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val1", value = 0.1)
     updateNumericInput(session, "val2", value = 0.5)
-    updateNumericInput(session, "val3", value = 0.1)
+    updateNumericInput(session, "val3", value = 1)
+    updateSelectInput(session,"tovary3", selected = "None")
+    updateNumericInput(session, "val31", value = 0.25)
+    updateNumericInput(session, "val32", value = 0.5)
+    updateNumericInput(session, "val33", value = 1)
     updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
   })
   
   # Adopt preset 02
   observeEvent(input$preset_02, {
     output$preset_text <- renderText({  # text to describe the preset
-      paste("Sometimes the researcher already knows the regions of the genome to focus on and is interested in detecting very rare cell populations with copy number aberrations in these regions, even if it requires ultra-deep targeted sequencing. Such needs arise in (1) monitoring of potential recurrence of a particular cancer clone during remission and hoping to achieve high sensitivity with a large D; (2) monitoring gene-specific aberrations in circulating tumor cells or circulating tumor DNA when a predefined list of oncogenes is particularly relevant for a particular cancer type (such as BRAF in melanoma). These practical demands share the common feature of small F and large D. As we show in the following graph, for N=3, l=100, W=1000, and α=0.05, sequencing with 1000X read depth can detect 10kb CNV in a sample contains as low as 2% interested cells (power = 0.97), 100X read depth can detect 10kb CNV in a sample contains 6% interested cells (power = 0.96), and 30X read depth can only detect 10kb CNV in a sample contains more than 12% interested cells (power = 0.97).")
     })
     updateRadioButtons(session, "dis", selected = "Poisson")
-    updateNumericInput(session, "F", value = 0.02)
+    updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
-    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "L", value = 5000)
     updateNumericInput(session, "N", value = 3)
-    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "W", value = 1)
     updateNumericInput(session, "l", value = 100)
-    updateNumericInput(session, "D", value = 1000)
+    updateNumericInput(session, "D", value = 1)
     updateNumericInput(session, "theta_1", value = 0)
-    updateSelectInput(session, "tovary", selected = "Sample purity")
-    updateNumericInput(session, "min1", value = 0)
-    updateNumericInput(session, "max1", value = 0.2)
+    updateSelectInput(session, "tovary", selected = "Length of CNV")
+    updateNumericInput(session, "min1", value = 5000)
+    updateNumericInput(session, "max1", value = 500000)
     updateSelectInput(session,"tovary2", selected = "Read Depth")
-    updateNumericInput(session, "val1", value = 1000)
-    updateNumericInput(session, "val2", value = 100)
-    updateNumericInput(session, "val3", value = 30)
-    updateCheckboxInput(session, "log_scale", value = FALSE)
+    updateNumericInput(session, "val1", value = 0.1)
+    updateNumericInput(session, "val2", value = 0.5)
+    updateNumericInput(session, "val3", value = 1)
+    updateSelectInput(session,"tovary3", selected = "Overdispersion parameter")
+    updateNumericInput(session, "val31", value = 0)
+    updateNumericInput(session, "val32", value = 0.5)
+    updateNumericInput(session, "val33", value = 1)
+    updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
   })
   
   # Adopt preset 03
   observeEvent(input$preset_03, {
     output$preset_text <- renderText({  # text to describe the preset
-      paste("This example with N=3, l=100, W=1000, and α=0.05 shows power as a function of CNA length L and read depth D under a Poisson distribution. For a CNA with L=10kb, read depth of 0.1 shows very low power (0.34), while a read depth of 1 would increase power significantly (1.00). With today’s sequencing technology, 1X coverage of a mammalian genome costs $30-40. In comparison, a 3-million SNP genotyping platform will measure about 10 SNP loci in this CNA, but at a higher cost.")
     })
     updateRadioButtons(session, "dis", selected = "Poisson")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
     updateNumericInput(session, "N", value = 3)
-    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "W", value = 1)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
     updateNumericInput(session, "theta_1", value = 0)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
-    updateNumericInput(session, "max1", value = 100000)
+    updateNumericInput(session, "max1", value = 5000000)
     updateSelectInput(session,"tovary2", selected = "Read Depth")
-    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val1", value = 0.1)
     updateNumericInput(session, "val2", value = 0.5)
-    updateNumericInput(session, "val3", value = 0.1)
+    updateNumericInput(session, "val3", value = 1)
+    updateSelectInput(session,"tovary3", selected = "Sample purity")
+    updateNumericInput(session, "val31", value = 0.1)
+    updateNumericInput(session, "val32", value = 0.5)
+    updateNumericInput(session, "val33", value = 1)
     updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
   })
   
   # Adopt preset 04
   observeEvent(input$preset_04, {
     output$preset_text <- renderText({  # text to describe the preset
-      paste("This example is exact like our preset 03 except that this example is under the assumption of Negative Binomial model with an overdispersion parameter of 1. For the same CNA with L=10kb, the power decreases from 1.00 to 0.95 at the read depth of 1. The decrease in power here is due to the increase in overall variance and can be compensated by higher sequencing depth if desired.")
+    })
+    updateRadioButtons(session, "dis", selected = "Poisson")
+    updateNumericInput(session, "F", value = 1)
+    updateNumericInput(session, "alpha", value = 0.05)
+    updateNumericInput(session, "L", value = 5000)
+    updateNumericInput(session, "N", value = 3)
+    updateNumericInput(session, "W", value = 1)
+    updateNumericInput(session, "l", value = 100)
+    updateNumericInput(session, "D", value = 1)
+    updateNumericInput(session, "theta_1", value = 0)
+    updateSelectInput(session, "tovary", selected = "Length of CNV")
+    updateNumericInput(session, "min1", value = 5000)
+    updateNumericInput(session, "max1", value = 1000000)
+    updateSelectInput(session,"tovary2", selected = "Sample purity")
+    updateNumericInput(session, "val1", value = 0.1)
+    updateNumericInput(session, "val2", value = 0.5)
+    updateNumericInput(session, "val3", value = 1)
+    updateSelectInput(session,"tovary3", selected = "Overdispersion parameter")
+    updateNumericInput(session, "val31", value = 0)
+    updateNumericInput(session, "val32", value = 1)
+    updateNumericInput(session, "val33", value = 0)
+    updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
+  })
+  
+  # Adopt preset 05
+  observeEvent(input$preset_05, {
+    output$preset_text <- renderText({  # text to describe the preset
+    })
+    updateRadioButtons(session, "dis", selected = "Poisson")
+    updateNumericInput(session, "F", value = 1)
+    updateNumericInput(session, "alpha", value = 0.05)
+    updateNumericInput(session, "L", value = 10000)
+    updateNumericInput(session, "N", value = 3)
+    updateNumericInput(session, "W", value = 1)
+    updateNumericInput(session, "l", value = 100)
+    updateNumericInput(session, "D", value = 1)
+    updateNumericInput(session, "theta_1", value = 0)
+    updateSelectInput(session, "tovary", selected = "Length of CNV")
+    updateNumericInput(session, "min1", value = 5000)
+    updateNumericInput(session, "max1", value = 10000000)
+    updateSelectInput(session,"tovary2", selected = "Read Depth")
+    updateNumericInput(session, "val1", value = 0.1)
+    updateNumericInput(session, "val2", value = 0.5)
+    updateNumericInput(session, "val3", value = 1)
+    updateSelectInput(session,"tovary3", selected = "Sample purity")
+    updateNumericInput(session, "val31", value = 0.01)
+    updateNumericInput(session, "val32", value = 0.1)
+    updateNumericInput(session, "val33", value = 0.5)
+    updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
+  })
+  
+  # Adopt preset 06
+  observeEvent(input$preset_06, {
+    output$preset_text <- renderText({  # text to describe the preset
     })
     updateRadioButtons(session, "dis", selected = "Negative Binomial with theta")
     updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
     updateNumericInput(session, "N", value = 3)
-    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "W", value = 1)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
     updateNumericInput(session, "theta_1", value = 1)
     updateSelectInput(session, "tovary", selected = "Length of CNV")
     updateNumericInput(session, "min1", value = 5000)
-    updateNumericInput(session, "max1", value = 100000)
+    updateNumericInput(session, "max1", value = 10000000)
     updateSelectInput(session,"tovary2", selected = "Read Depth")
-    updateNumericInput(session, "val1", value = 1)
+    updateNumericInput(session, "val1", value = 0.1)
     updateNumericInput(session, "val2", value = 0.5)
-    updateNumericInput(session, "val3", value = 0.1)
+    updateNumericInput(session, "val3", value = 1)
+    updateSelectInput(session,"tovary3", selected = "Sample purity")
+    updateNumericInput(session, "val31", value = 0.01)
+    updateNumericInput(session, "val32", value = 0.1)
+    updateNumericInput(session, "val33", value = 0.5)
     updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
   })
   
-  # Adopt preset 05
-  observeEvent(input$preset_05, {
+  observeEvent(input$preset_07, {
     output$preset_text <- renderText({  # text to describe the preset
-      paste("This example is corresponding to the figure 3 in our paper. It extends our earlier example from preset 3 by showing the effect on power when the sample purity is reduced from 1 to 0.5 and 0.1. For the same CNA with L=10kb at the read depth of 1, the power decreases from 1.00 to 0.80 when the sample purity is 0.5, to 0.08 when the sample purity is 0.1. Again, such decrease in power can be compensated by higher sequencing depth.")
     })
     updateRadioButtons(session, "dis", selected = "Poisson")
-    updateNumericInput(session, "F", value = 0.5)
+    updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
     updateNumericInput(session, "N", value = 3)
-    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "W", value = 1)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
     updateNumericInput(session, "theta_1", value = 0)
-    updateSelectInput(session, "tovary", selected = "Length of CNV")
-    updateNumericInput(session, "min1", value = 5000)
-    updateNumericInput(session, "max1", value = 100000)
-    updateSelectInput(session,"tovary2", selected = "Sample purity")
-    updateNumericInput(session, "val1", value = 1)
-    updateNumericInput(session, "val2", value = 0.5)
-    updateNumericInput(session, "val3", value = 0.1)
-    updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateSelectInput(session, "tovary", selected = "Sample purity")
+    updateNumericInput(session, "min1", value = 0)
+    updateNumericInput(session, "max1", value = 0.1)
+    updateSelectInput(session,"tovary2", selected = "Read Depth")
+    updateNumericInput(session, "val1", value = 10)
+    updateNumericInput(session, "val2", value = 100)
+    updateNumericInput(session, "val3", value = 1000)
+    updateSelectInput(session,"tovary3", selected = "Length of CNV")
+    updateNumericInput(session, "val31", value = 10000)
+    updateNumericInput(session, "val32", value = 5000)
+    updateNumericInput(session, "val33", value = 5000)
+    updateCheckboxInput(session, "log_scale", value = FALSE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
   })
   
-  # Adopt preset 06
-  observeEvent(input$preset_06, {
+  observeEvent(input$preset_08, {
     output$preset_text <- renderText({  # text to describe the preset
-      paste("This example is exact like our preset 03 except that this example is under the assumption of Negative Binomial model with an overdispersion parameter of 1. For the same CNA with L=10kb and F=0.1, the power decreases from 0.80 to 0.49 at the read depth of 1. The decrease in power here is due to the increase in overall variance and can be compensated by higher sequencing depth if desired.")
     })
     updateRadioButtons(session, "dis", selected = "Negative Binomial with theta")
-    updateNumericInput(session, "F", value = 0.5)
+    updateNumericInput(session, "F", value = 1)
     updateNumericInput(session, "alpha", value = 0.05)
     updateNumericInput(session, "L", value = 10000)
     updateNumericInput(session, "N", value = 3)
-    updateNumericInput(session, "W", value = 1000)
+    updateNumericInput(session, "W", value = 1)
     updateNumericInput(session, "l", value = 100)
     updateNumericInput(session, "D", value = 1)
     updateNumericInput(session, "theta_1", value = 1)
-    updateSelectInput(session, "tovary", selected = "Length of CNV")
-    updateNumericInput(session, "min1", value = 5000)
-    updateNumericInput(session, "max1", value = 100000)
-    updateSelectInput(session,"tovary2", selected = "Sample purity")
-    updateNumericInput(session, "val1", value = 1)
-    updateNumericInput(session, "val2", value = 0.5)
-    updateNumericInput(session, "val3", value = 0.1)
-    updateCheckboxInput(session, "log_scale", value = TRUE)
+    updateSelectInput(session, "tovary", selected = "Sample purity")
+    updateNumericInput(session, "min1", value = 0)
+    updateNumericInput(session, "max1", value = 0.1)
+    updateSelectInput(session,"tovary2", selected = "Read Depth")
+    updateNumericInput(session, "val1", value = 10)
+    updateNumericInput(session, "val2", value = 100)
+    updateNumericInput(session, "val3", value = 1000)
+    updateSelectInput(session,"tovary3", selected = "Length of CNV")
+    updateNumericInput(session, "val31", value = 10000)
+    updateNumericInput(session, "val32", value = 5000)
+    updateNumericInput(session, "val33", value = 5000)
+    updateCheckboxInput(session, "log_scale", value = FALSE)
+    updateCheckboxInput(session, "fix_y_range", value = TRUE)
+    updateCheckboxInput(session, "show_x_at_0", value = FALSE)
   })
   
   # Allow the user to download the data
