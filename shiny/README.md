@@ -19,5 +19,5 @@ This website is maintained by Jun Li's Lab.
 Please contact hanyou@umich.edu and sramdas@umich.edu for questions.
 
 ### Source code
-GitHub: https://github.com/shwetaramdas/cnvpoweranalysis  
-Shiny: https://shiny.med.umich.edu/apps/hanyou/CNV_Detection_Power_Calculator/
+GitHub: [github.com/shwetaramdas/cnvpoweranalysis](http://github.com/shwetaramdas/cnvpoweranalysis)  
+Web App: [cnvpowercalculator.junzli.com](http://cnvpowercalculator.junzli.com)  
