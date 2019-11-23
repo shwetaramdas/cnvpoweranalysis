@@ -1,6 +1,6 @@
 ### Overview
 This tool allows users to estimate the power of their sequencing experiments for CNV detection.  
-The formulae used for power calculations are described in: "SS"  
+The formulae used for power calculations are described in: "https://www.biorxiv.org/content/10.1101/413690v1"  
 If you find this tool useful, please consider cite our paper.  
 
 ### Parameters specified by user
