@@ -1,3 +1,6 @@
+### 2019-11-23  
+\- Adjust the hyperlinks  
+
 ### 2019-09-16
 \- With the calculator now capable of generating up to 9 lines, 8 presets are adjusted to refect 6 figures in the paper  
 
