@@ -1,5 +1,5 @@
 ### Overview
-This tool allows users to estimate the power of their sequencing experiments for CNV detection.  
+This tool at [cnvpowercalculator.junzli.com](http://cnvpowercalculator.junzli.com) allows users to estimate the power of their sequencing experiments for CNV detection.  
 The formulae used for power calculations are described in [this BioRxiv paper](https://www.biorxiv.org/content/10.1101/413690v1)  
 If you find this tool useful, please consider cite our paper.  
 
